@@ -70,9 +70,6 @@ while (!shouldStop) {
 }
 
 console.log(`Second problem solution is: ${getSandCount(matrix2)}`);
-printMatrix(matrix2);
-debugger;
-
 
 // Utils
 
