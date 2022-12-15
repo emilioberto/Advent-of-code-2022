@@ -1,15 +1,22 @@
-import {open} from 'node:fs/promises';
+import fs from "fs";
+import readline from "readline";
+import path from "path";
 
-const file = await open('./resources/14/input');
+const input = ['498,4 -> 498,6 -> 496,6', '503,4 -> 502,4 -> 502,9 -> 494,9'];
+// const input = [];
+// const readInterface = readline.createInterface({
+//     input: fs.createReadStream('./resources/14/input')
+// });
+//
+// for await (const line of readInterface) {
+//     input.push(line);
+// }
 
 class Coordinate {
     constructor(public x: number, public y: number) {
     }
 }
 
-const sandSource = new Coordinate(500, 0);
-
-const input = ['498,4 -> 498,6 -> 496,6', '503,4 -> 502,4 -> 502,9 -> 494,9'];
 const paths = input.map(line => getPathFromLine(line));
 const dropPointSymbol = '+';
 const airSymbol = '.';
@@ -19,58 +26,93 @@ const fallingSandSymbol = '~';
 
 const xCoordinates = paths.flatMap(path => path).map(c => c.x);
 const yCoordinates = paths.flatMap(path => path).map(c => c.y);
+let margin = 1;
 const minX = Math.min(...xCoordinates);
 const minY = 0;
 const maxX = Math.max(...xCoordinates);
 const maxY = Math.max(...yCoordinates);
 const dropY = 0;
-const dropX = 500 - minX;
+const dropX = 500 - (minX - margin);
 const normalizedPaths = paths.map(path => path.map(c => new Coordinate(c.x - minX, c.y)));
 
-const row = Array.from({length: (maxX) - (minX - 1)}, _ => airSymbol);
-let rows = Array.from({length: (maxY + 1)}, _ => [...row]);
 
-rows = setDropPoint(rows, new Coordinate(dropX, dropY));
-
-normalizedPaths.forEach((path, index, paths) => {
-    path.forEach((coordinate, index, coordinates) => {
-        if (index === 0) {
-            return;
-        }
-
-        const direction = coordinate.x === coordinates[index - 1].x ? 'vertical' : 'horizontal';
-        if (direction === 'horizontal') {
-            const min = Math.min(coordinate.x, coordinates[index - 1].x);
-            const max = Math.max(coordinate.x, coordinates[index - 1].x);
-            for (let x = min; x <= max; x++) {
-                rows[coordinate.y][x] = rockSymbol;
-            }
-        } else {
-            const min = Math.min(coordinate.y, coordinates[index - 1].y);
-            const max = Math.max(coordinate.y, coordinates[index - 1].y);
-            for (let y = min; y <= max; y++) {
-                rows[y][coordinate.x] = rockSymbol;
-            }
-        }
-    });
-});
+let matrix = generateMatrix();
 
 let shouldStop = false;
 let count = 0;
 while (!shouldStop) {
-    const result = dropSand(rows, new Coordinate(dropX, dropY), maxY);
+    const result = dropSand(matrix, new Coordinate(dropX, dropY), maxY);
     if (result.y > maxY) {
         shouldStop = true;
+        continue;
     }
 
+    // printMatrix(matrix);
     count++;
 }
 
-printMatrix(rows);
-console.log(count);
+console.log(`First problem solution is: ${count}`);
+
+// SECOND PROBLEM
+
+matrix = generateMatrix();
+
+margin = 20;
+const matrix2 = generateMatrix();
+matrix2.push(Array.from({length: (maxX + margin * 2) - (minX - 1)}, _ => airSymbol));
+matrix2.push(Array.from({length: (maxX + margin * 2) - (minX - 1)}, _ => rockSymbol));
+shouldStop = false;
+count = 0;
+while (!shouldStop) {
+    const result = dropSand(matrix2, new Coordinate(dropX, dropY), maxY, true);
+    if (result.y === dropY && result.x === dropX) {
+        shouldStop = true;
+        continue;
+    }
+
+    printMatrix(matrix2);
+    count++;
+}
+
+debugger;
+
+
+// Utils
+
+function generateMatrix() {
+    const detailRow = Array.from({length: (maxX + margin * 2) - (minX - 1)}, _ => airSymbol);
+    let master = Array.from({length: (maxY + 1)}, _ => [...detailRow]);
+
+    master = setDropPoint(master, new Coordinate(dropX, dropY));
+
+    normalizedPaths.forEach((path, index, paths) => {
+        path.forEach((coordinate, index, coordinates) => {
+            if (index === 0) {
+                return;
+            }
+
+            const direction = coordinate.x === coordinates[index - 1].x ? 'vertical' : 'horizontal';
+            if (direction === 'horizontal') {
+                const min = Math.min(coordinate.x, coordinates[index - 1].x);
+                const max = Math.max(coordinate.x, coordinates[index - 1].x);
+                for (let x = min; x <= max; x++) {
+                    master[coordinate.y][x + margin] = rockSymbol;
+                }
+            } else {
+                const min = Math.min(coordinate.y, coordinates[index - 1].y);
+                const max = Math.max(coordinate.y, coordinates[index - 1].y);
+                for (let y = min; y <= max; y++) {
+                    master[y][coordinate.x + margin] = rockSymbol;
+                }
+            }
+        });
+    });
+    return master;
+}
 
 function printMatrix(rows: string[][]) {
     const matrix = rows.map(row => row.join(' ')).join('\n');
+    console.clear();
     console.log(matrix);
 }
 
@@ -86,44 +128,53 @@ function setDropPoint(rows: string[][], coordinate: Coordinate) {
     return rows;
 }
 
-function dropSand(rows: string[][], dropStart: Coordinate, maxY: number): Coordinate {
+function dropSand(m: string[][], dropStart: Coordinate, maxY: number, hasInfiniteFloor = false): Coordinate {
     let isPositioned = false;
     let yOffset = 0;
     let xOffset = 0;
     const sandCoordinate = new Coordinate(dropStart.x, 0);
-    while (!isPositioned || yOffset > maxY) {
-        const nextBlock = rows[sandCoordinate.y + yOffset]?.[sandCoordinate.x + xOffset];
+    while (!isPositioned || yOffset <= maxY) {
+        const nextBlock = m[sandCoordinate.y + yOffset]?.[sandCoordinate.x + xOffset];
         if (nextBlock === airSymbol || nextBlock === dropPointSymbol) {
-            yOffset+= 1;
+            yOffset += 1;
             continue;
         }
 
-        const leftDiagonalBlock = rows[sandCoordinate.y + yOffset + 1]?.[sandCoordinate.x + xOffset - 1];
-        if (leftDiagonalBlock === airSymbol || leftDiagonalBlock === dropPointSymbol) {
-            yOffset += 2;
+        const leftBlock = m[sandCoordinate.y + yOffset]?.[sandCoordinate.x + xOffset - 1];
+        const leftDiagonalBlock = m[sandCoordinate.y + yOffset]?.[sandCoordinate.x + xOffset - 1];
+        if (leftBlock === airSymbol && (leftDiagonalBlock === airSymbol || leftDiagonalBlock === dropPointSymbol)) {
             xOffset -= 1;
             continue;
         }
 
-        const rightDiagonalBlock = rows[sandCoordinate.y + yOffset + 1]?.[sandCoordinate.x + xOffset + 1];
-        if (rightDiagonalBlock === airSymbol || rightDiagonalBlock === dropPointSymbol) {
-            yOffset += 2;
+        const rightBlock = m[sandCoordinate.y + yOffset]?.[sandCoordinate.x + xOffset + 1];
+        const rightDiagonalBlock = m[sandCoordinate.y + yOffset]?.[sandCoordinate.x + xOffset + 1];
+        if (rightBlock === airSymbol && (rightDiagonalBlock === airSymbol || rightDiagonalBlock === dropPointSymbol)) {
             xOffset += 1;
             continue;
         }
 
+        if (!hasInfiniteFloor && yOffset > maxY) {
+            sandCoordinate.y += yOffset;
+            sandCoordinate.x += xOffset;
+            return sandCoordinate;
+        }
+
+        if (hasInfiniteFloor && yOffset > maxY) {
+            sandCoordinate.y += yOffset;
+            sandCoordinate.x += xOffset;
+            m[sandCoordinate.y][sandCoordinate.x] = sandSymbol;
+            isPositioned = true;
+            return sandCoordinate;
+        }
+
         sandCoordinate.y += yOffset - 1;
         sandCoordinate.x += xOffset;
-        rows[sandCoordinate.y][sandCoordinate.x] = sandSymbol;
+        m[sandCoordinate.y][sandCoordinate.x] = sandSymbol;
         isPositioned = true;
-        printMatrix(rows);
         return sandCoordinate;
     }
 
-    return
-}
-
-function getNextBlock(rows: string[][], sandCoordinate: Coordinate): boolean {
-    return rows[sandCoordinate.y][sandCoordinate.x] === airSymbol || rows[sandCoordinate.y][sandCoordinate.x] === dropPointSymbol;
+    return sandCoordinate;
 }
 
