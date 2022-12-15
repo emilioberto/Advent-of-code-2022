@@ -32,7 +32,7 @@ const minY = 0;
 const maxX = Math.max(...xCoordinates);
 const maxY = Math.max(...yCoordinates);
 const dropY = 0;
-const dropX = 500 - (minX - margin);
+let dropX = 500 - (minX - margin);
 const normalizedPaths = paths.map(path => path.map(c => new Coordinate(c.x - minX, c.y)));
 
 
@@ -58,6 +58,7 @@ console.log(`First problem solution is: ${count}`);
 matrix = generateMatrix();
 
 margin = 20;
+dropX = 500 - (minX - margin);
 const matrix2 = generateMatrix();
 matrix2.push(Array.from({length: (maxX + margin * 2) - (minX - 1)}, _ => airSymbol));
 matrix2.push(Array.from({length: (maxX + margin * 2) - (minX - 1)}, _ => rockSymbol));
@@ -161,7 +162,7 @@ function dropSand(m: string[][], dropStart: Coordinate, maxY: number, hasInfinit
         }
 
         if (hasInfiniteFloor && yOffset > maxY) {
-            sandCoordinate.y += yOffset;
+            sandCoordinate.y += yOffset -1;
             sandCoordinate.x += xOffset;
             m[sandCoordinate.y][sandCoordinate.x] = sandSymbol;
             isPositioned = true;
