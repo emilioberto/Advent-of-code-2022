@@ -2,15 +2,15 @@ import fs from "fs";
 import readline from "readline";
 import path from "path";
 
-const input = ['498,4 -> 498,6 -> 496,6', '503,4 -> 502,4 -> 502,9 -> 494,9'];
-// const input = [];
-// const readInterface = readline.createInterface({
-//     input: fs.createReadStream('./resources/14/input')
-// });
-//
-// for await (const line of readInterface) {
-//     input.push(line);
-// }
+// const input = ['498,4 -> 498,6 -> 496,6', '503,4 -> 502,4 -> 502,9 -> 494,9'];
+const input = [];
+const readInterface = readline.createInterface({
+    input: fs.createReadStream('./resources/14/input')
+});
+
+for await (const line of readInterface) {
+    input.push(line);
+}
 
 class Coordinate {
     constructor(public x: number, public y: number) {
@@ -39,7 +39,6 @@ const normalizedPaths = paths.map(path => path.map(c => new Coordinate(c.x - min
 let matrix = generateMatrix();
 
 let shouldStop = false;
-let count = 0;
 while (!shouldStop) {
     const result = dropSand(matrix, new Coordinate(dropX, dropY), maxY);
     if (result.y > maxY) {
@@ -48,33 +47,30 @@ while (!shouldStop) {
     }
 
     // printMatrix(matrix);
-    count++;
 }
 
-console.log(`First problem solution is: ${count}`);
+console.log(`First problem solution is: ${getSandCount(matrix)}`);
 
 // SECOND PROBLEM
 
 matrix = generateMatrix();
 
-margin = 20;
+margin = maxX;
 dropX = 500 - (minX - margin);
 const matrix2 = generateMatrix();
 matrix2.push(Array.from({length: (maxX + margin * 2) - (minX - 1)}, _ => airSymbol));
 matrix2.push(Array.from({length: (maxX + margin * 2) - (minX - 1)}, _ => rockSymbol));
 shouldStop = false;
-count = 0;
 while (!shouldStop) {
     const result = dropSand(matrix2, new Coordinate(dropX, dropY), maxY, true);
     if (result.y === dropY && result.x === dropX) {
         shouldStop = true;
         continue;
     }
-
-    printMatrix(matrix2);
-    count++;
 }
 
+console.log(`Second problem solution is: ${getSandCount(matrix2)}`);
+printMatrix(matrix2);
 debugger;
 
 
@@ -161,7 +157,7 @@ function dropSand(m: string[][], dropStart: Coordinate, maxY: number, hasInfinit
             return sandCoordinate;
         }
 
-        if (hasInfiniteFloor && yOffset > maxY) {
+        if (hasInfiniteFloor && yOffset === maxY) {
             sandCoordinate.y += yOffset -1;
             sandCoordinate.x += xOffset;
             m[sandCoordinate.y][sandCoordinate.x] = sandSymbol;
@@ -179,3 +175,8 @@ function dropSand(m: string[][], dropStart: Coordinate, maxY: number, hasInfinit
     return sandCoordinate;
 }
 
+function getSandCount(matrix: string[][]): number {
+    return matrix.reduce((previousValue, currentValue) => {
+        return previousValue + currentValue.filter(e => e === sandSymbol).length;
+    }, 0);
+}
