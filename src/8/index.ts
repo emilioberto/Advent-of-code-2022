@@ -72,8 +72,8 @@ for (let i = 1; i < map.length - 1; i++) {
         let shouldStop = false;
         let leftScore = 0;
         while (!shouldStop) {
-            leftScore--;
-            if (j + leftScore < 0) {
+            leftScore++;
+            if (j - leftScore <= 0) {
                 shouldStop = true;
                 leftScore = j;
                 continue;
@@ -83,15 +83,12 @@ for (let i = 1; i < map.length - 1; i++) {
                 shouldStop = true;
             }
         }
-        if (leftScore < 0) {
-            leftScore *= -1;
-        }
 
         shouldStop = false;
         let rightScore = 0;
         while (!shouldStop) {
             rightScore++;
-            if (j + rightScore > map[0].length) {
+            if (j + rightScore >= map[0].length) {
                 shouldStop = true;
                 rightScore = map[i].length - 1 - j;
                 continue;
@@ -110,26 +107,23 @@ for (let i = 1; i < map.length - 1; i++) {
         shouldStop = false;
         let upperScore = 0;
         while (!shouldStop) {
-            upperScore--;
-            if (i + upperScore < 0) {
+            upperScore++;
+            if (i - upperScore <= 0) {
                 shouldStop = true;
                 upperScore = i;
                 continue;
             }
 
-            if (verticalRow[i - upperScore] < elementToCheck) {
+            if (verticalRow[i - upperScore] <= elementToCheck) {
                 shouldStop = true;
             }
-        }
-        if (upperScore < 0) {
-            upperScore *= -1;
         }
 
         shouldStop = false;
         let lowerScore = 0;
         while (!shouldStop) {
             lowerScore++;
-            if (i + lowerScore > verticalRow.length) {
+            if (i + lowerScore >= verticalRow.length) {
                 shouldStop = true;
                 upperScore = verticalRow.length - 1 - i;
                 continue;
