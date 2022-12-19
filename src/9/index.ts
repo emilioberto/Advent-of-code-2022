@@ -3,7 +3,7 @@ import readline from "readline";
 
 let input: string[] = [];
 const readInterface = readline.createInterface({
-    input: fs.createReadStream('./resources/9/testinput')
+    input: fs.createReadStream('./resources/9/input')
 });
 
 for await (const line of readInterface) {
@@ -12,14 +12,14 @@ for await (const line of readInterface) {
 
 const instructions: [string, number][] = [];
 input.forEach(row => {
-    const [direction, _, steps] = row;
+    const [direction, steps] = row.split(' ');
     instructions.push([direction, +steps]);
 })
 
 // Part 1
 
-const size = 20;
-const matrix = Array(size).fill([]).map(row => Array(size).fill('.'));
+const size = 23_000;
+const matrix = Array(size).fill([]).map(_ => Array(size).fill('.'));
 matrix[size - 1][0] = 'H';
 
 let headCurrentY = size - 1;
@@ -29,10 +29,10 @@ let tailCurrentY = size - 1;
 let tailCurrentX = 0;
 
 let lastDirection: string | null;
+let visitedByTail: [number, number][] = [];
 
 for (const instruction of instructions) {
     const [direction, steps] = instruction;
-    printMatrix(matrix);
     for (let i = 0; i < steps; i++) {
         matrix[headCurrentY][headCurrentX] = '.';
         switch (direction) {
@@ -50,61 +50,53 @@ for (const instruction of instructions) {
                 break;
         }
         matrix[headCurrentY][headCurrentX] = 'H';
-        matrix[tailCurrentY][tailCurrentX] = '.';
 
-        // if (lastDirection && lastDirection === direction) {
-        //     if (
-        //         ((tailCurrentX - headCurrentX) < -1 || (tailCurrentX - headCurrentX) > 1)
-        //         ||
-        //         ((tailCurrentY - headCurrentY) < -1 || (tailCurrentY - headCurrentY)  > 1)
-        //     ) {
-        //         switch (direction) {
-        //             case 'U':
-        //                 tailCurrentX = headCurrentX;
-        //                 tailCurrentY = headCurrentY + 1;
-        //                 break;
-        //             case 'L':
-        //                 tailCurrentY = headCurrentY;
-        //                 tailCurrentX = headCurrentX - 1;
-        //                 break;
-        //             case 'D':
-        //                 tailCurrentX = headCurrentX;
-        //                 tailCurrentY = headCurrentY - 1;
-        //                 break;
-        //             case 'R':
-        //                 tailCurrentY = headCurrentY;
-        //                 tailCurrentX = headCurrentX + 1;
-        //                 break;
-        //         }
-        //     } else {
-        //         switch (direction) {
-        //             case 'U':
-        //                 tailCurrentY -= 1;
-        //                 break;
-        //             case 'L':
-        //                 tailCurrentX -= 1;
-        //                 break;
-        //             case 'D':
-        //                 tailCurrentY += 1;
-        //                 break;
-        //             case 'R':
-        //                 tailCurrentX += 1;
-        //                 break;
-        //         }
-        //     }
-        // }
-        matrix[tailCurrentY][tailCurrentX] = 'T';
+        // 2 consecutive moves in same direction
+        if (!lastDirection || lastDirection === direction) {
+            matrix[tailCurrentY][tailCurrentX] = '.';
+            switch (direction) {
+                case 'U':
+                    // if on same axis AND detached then move
+                    if (isDetached(headCurrentX, headCurrentY, tailCurrentX, tailCurrentY) || !lastDirection) {
+                        tailCurrentY = headCurrentY + 1;
+                        tailCurrentX = headCurrentX;
+                    }
+                    break;
+                case 'L':
+                    if (isDetached(headCurrentX, headCurrentY, tailCurrentX, tailCurrentY) || !lastDirection) {
+                        tailCurrentX = headCurrentX + 1;
+                        tailCurrentY = headCurrentY;
+                    }
+                    break;
+                case 'D':
+                    if (isDetached(headCurrentX, headCurrentY, tailCurrentX, tailCurrentY) || !lastDirection) {
+                        tailCurrentY = headCurrentY - 1;
+                        tailCurrentX = headCurrentX;
+                    }
+                    break;
+                case 'R':
+                    if (isDetached(headCurrentX, headCurrentY, tailCurrentX, tailCurrentY)|| !lastDirection) {
+                        tailCurrentX = headCurrentX - 1;
+                        tailCurrentY = headCurrentY;
+                    }
+                    break;
+            }
+            matrix[tailCurrentY][tailCurrentX] = 'T';
+        }
 
+        const alreadyVisited = visitedByTail.some(coordinate => coordinate[0] === tailCurrentX && coordinate[1] === tailCurrentY);
+        if (!visitedByTail.length || !alreadyVisited) {
+            visitedByTail.push([tailCurrentX, tailCurrentY]);
+        }
         lastDirection = direction;
-        await new Promise(r => setTimeout(r, 1000));
-        printMatrix(matrix);
+        // await new Promise(resolve => setTimeout(_ => resolve(true), 500));
+        // printMatrix(matrix);
+        // console.log(tailCurrentX, tailCurrentY, visitedByTail);
     }
 }
 
-instructions.forEach(([direction, steps]) => {
-});
-
-
+console.log(`Part 1 result is: ${visitedByTail.length}`);
+debugger;
 // Part 2
 
 
@@ -114,3 +106,10 @@ function printMatrix(matrix: string[][]): void {
     console.clear();
     console.log(matrix.map(row => row.join('')).join('\n'));
 }
+
+function isDetached(headCurrentX: number, headCurrentY: number, tailCurrentX: number, tailCurrentY: number) {
+    return ((headCurrentX - tailCurrentX) > 1 || (headCurrentX - tailCurrentX) < -1)
+        ||
+        ((headCurrentY - tailCurrentY) > 1 || (headCurrentY - tailCurrentY) < -1)
+}
+
