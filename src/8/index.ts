@@ -101,7 +101,6 @@ function checkLeft(valueToCheck: number, startingIndex: number, array: number[])
         leftScore++;
         if (startingIndex - leftScore === 0) {
             shouldStop = true;
-            leftScore = startingIndex - 1;
             continue;
         }
 
@@ -118,9 +117,8 @@ function checkRight(valueToCheck: number, startingIndex: number, array: number[]
     let rightScore = 0;
     while (!shouldStop) {
         rightScore++;
-        if (startingIndex + rightScore === array.length) {
+        if (startingIndex + rightScore === array.length - 1) {
             shouldStop = true;
-            rightScore = array.length - startingIndex;
             continue;
         }
 
