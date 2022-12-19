@@ -18,9 +18,13 @@ input.forEach(row => {
 
 // Part 1
 
-const size = 23_000;
-const matrix = Array(size).fill([]).map(_ => Array(size).fill('.'));
-matrix[size - 1][0] = 'H';
+const size = 22000;
+// let matrix = [];
+// const row = Array(size).fill(null);
+// for (let i = 0; i < size; i++) {
+//     matrix.push([...row]);
+// }
+// matrix[size - 1][0] = 'H';
 
 let headCurrentY = size - 1;
 let headCurrentX = 0;
@@ -29,12 +33,12 @@ let tailCurrentY = size - 1;
 let tailCurrentX = 0;
 
 let lastDirection: string | null;
-let visitedByTail: [number, number][] = [];
+let visitedByTail: string[] = [];
 
 for (const instruction of instructions) {
     const [direction, steps] = instruction;
     for (let i = 0; i < steps; i++) {
-        matrix[headCurrentY][headCurrentX] = '.';
+        // matrix[headCurrentY][headCurrentX] = '.';
         switch (direction) {
             case 'U':
                 headCurrentY -= 1;
@@ -49,11 +53,11 @@ for (const instruction of instructions) {
                 headCurrentX += 1;
                 break;
         }
-        matrix[headCurrentY][headCurrentX] = 'H';
+        // matrix[headCurrentY][headCurrentX] = 'H';
 
         // 2 consecutive moves in same direction
         if (!lastDirection || lastDirection === direction) {
-            matrix[tailCurrentY][tailCurrentX] = '.';
+            // matrix[tailCurrentY][tailCurrentX] = '.';
             switch (direction) {
                 case 'U':
                     // if on same axis AND detached then move
@@ -81,12 +85,12 @@ for (const instruction of instructions) {
                     }
                     break;
             }
-            matrix[tailCurrentY][tailCurrentX] = 'T';
+            // matrix[tailCurrentY][tailCurrentX] = 'T';
         }
 
-        const alreadyVisited = visitedByTail.some(coordinate => coordinate[0] === tailCurrentX && coordinate[1] === tailCurrentY);
-        if (!visitedByTail.length || !alreadyVisited) {
-            visitedByTail.push([tailCurrentX, tailCurrentY]);
+        const coordinateString = [tailCurrentX, tailCurrentY].join(',');
+        if (!visitedByTail.length || visitedByTail.every(e => e !== coordinateString)) {
+            visitedByTail.push(coordinateString);
         }
         lastDirection = direction;
         // await new Promise(resolve => setTimeout(_ => resolve(true), 500));
