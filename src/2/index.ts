@@ -1,59 +1,92 @@
-import {open} from 'node:fs/promises';
+import readline from "readline";
+import fs from "fs";
 
-const file = await open('./resources/2/input');
+const figureScoresMap = new Map([
+    ['A', 1],
+    ['B', 2],
+    ['C', 3],
+    ['X', 1],
+    ['Y', 2],
+    ['Z', 3],
+]);
 
-class Shape {
-    private readonly winsOn: 'A' | 'B' | 'C';
-    private readonly drawsOn: 'A' | 'B' | 'C';
-    public readonly points: 1 | 2 | 3;
-    constructor(private shape: 'X' | 'Y' | 'Z') {
-        switch(shape) {
-            case "X":
-                this.winsOn = 'C';
-                this.drawsOn = 'A';
-                this.points = 1;
-                break;
-            case "Y":
-                this.winsOn = 'A';
-                this.drawsOn = 'B';
-                this.points = 2;
-                break;
-            case "Z":
-                this.winsOn = 'B';
-                this.drawsOn = 'C';
-                this.points = 3;
-                break;
-            default:
-                throw Error("What?");
-        }
-    }
+const handResultMap = new Map([
+    ['L', 0],
+    ['D', 3],
+    ['W', 6],
+])
 
-    draws(opponent: 'A' | 'B' | 'C'): boolean {
-        return opponent === this.drawsOn;
-    }
+const myMapping = ['A', 'B', 'C'];
+const opponentMapping = ['X', 'Y', 'Z'];
 
-    wins(opponent: 'A' | 'B' | 'C'): boolean {
-        return opponent === this.winsOn;
-    }
+let input: string[][] = [];
+const readInterface = readline.createInterface({
+    input: fs.createReadStream('./resources/2/input')
+});
+
+for await (const line of readInterface) {
+    const [mine, _, opponent] = line;
+    input.push([mine, opponent]);
 }
 
-let totalScore = 0;
-for await (const line of file.readLines()) {
-    const [opponentChoice, myChoice] = line.split('').filter(char => char !== ' ') as [a: 'A' | 'B' | 'C', b: 'X' | 'Y' | 'Z'];
+// Part 1
 
-    const myShape = new Shape(myChoice);
+let resultPart1 = 0;
+input.forEach(([mine, opponent]) => {
+    resultPart1 += figureScoresMap.get(mine);
 
-    if (myShape.draws(opponentChoice)) {
-        totalScore+= myShape.points + 3;
-        continue;
+    const handResult = getHandResult(mine, opponent);
+
+    resultPart1 += handResultMap.get(handResult);
+});
+
+console.log(`Part 1 result is: ${resultPart1}`);
+
+// Part 2
+
+const opponentHandToExpectedResultMap = new Map([
+    ['X', 'L'],
+    ['Y', 'D'],
+    ['Z', 'W']
+]);
+
+let resultPart2 = 0;
+input.forEach(([opponentChoice, expectedResultKey]) => {
+    const expectedResult = opponentHandToExpectedResultMap.get(expectedResultKey) as 'D' | 'W' | 'L';
+    resultPart2 += handResultMap.get(expectedResult);
+
+    const figureToSatisfyExpectedResult = getSatisfyingFigure(opponentChoice, expectedResult);
+    resultPart2 += figureScoresMap.get(figureToSatisfyExpectedResult);
+});
+
+console.log(`Part 2 result is: ${resultPart2}`);
+
+// Utils
+
+function getHandResult(mine: string, opponent: string): 'D' | 'W' | 'L' {
+    const myIndex = myMapping.indexOf(mine);
+    const opponentIndex = opponentMapping.indexOf(opponent);
+    if (myIndex === opponentIndex) {
+        return 'D';
     }
 
-    if (myShape.wins(opponentChoice)) {
-        totalScore+= myShape.points + 6;
-        continue;
+    if ((myIndex + 1) % 3 === opponentIndex) {
+        return 'L'
     }
 
-    totalScore+= myShape.points;
+    return 'W';
 }
 
-console.log(`Total score is ${totalScore}`);
+function getSatisfyingFigure(value: string, expectedResult: 'D' | 'W' | 'L'): 'X' | 'Y' | 'Z' {
+    const index = myMapping.indexOf(value);
+    if (expectedResult === 'D') {
+        return opponentMapping[index] as 'X' | 'Y' | 'Z';
+    }
+
+    const module = (index + 1) % 3;
+    if (expectedResult === 'W') {
+        return opponentMapping[module] as 'X' | 'Y' | 'Z';
+    }
+
+    return opponentMapping.find((value, i) => i !== index && i !== module)  as 'X' | 'Y' | 'Z';
+}
