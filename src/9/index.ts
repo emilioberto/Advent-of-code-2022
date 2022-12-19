@@ -18,7 +18,7 @@ input.forEach(row => {
 
 // Part 1
 
-const size = 22000;
+const size = 1_000_000;
 // let matrix = [];
 // const row = Array(size).fill(null);
 // for (let i = 0; i < size; i++) {
