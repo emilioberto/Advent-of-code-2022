@@ -1,5 +1,6 @@
 import fs from "fs";
 import readline from "readline";
+import {start} from "repl";
 
 let input: string[] = [];
 const readInterface = readline.createInterface({
@@ -69,72 +70,18 @@ for (let i = 1; i < map.length - 1; i++) {
     for (let j = 1; j < map[0].length - 1; j++) {
         const elementToCheck = map[i][j];
 
-        let shouldStop = false;
-        let leftScore = 0;
-        while (!shouldStop) {
-            leftScore++;
-            if (j - leftScore <= 0) {
-                shouldStop = true;
-                leftScore = j;
-                continue;
-            }
-
-            if (map[i][j - leftScore] >= elementToCheck) {
-                shouldStop = true;
-            }
-        }
-
-        shouldStop = false;
-        let rightScore = 0;
-        while (!shouldStop) {
-            rightScore++;
-            if (j + rightScore >= map[0].length) {
-                shouldStop = true;
-                rightScore = map[i].length - 1 - j;
-                continue;
-            }
-
-            if (map[i][j + rightScore] >= elementToCheck) {
-                shouldStop = true;
-            }
-        }
+        const leftScore = checkLeft(elementToCheck, j, map[i]);
+        const rightScore = checkRight(elementToCheck, j, map[i]);
 
         const verticalRow: number[] = []
         for (let k = 0; k < map.length; k++) {
             verticalRow.push(map[k][j]);
         }
 
-        shouldStop = false;
-        let upperScore = 0;
-        while (!shouldStop) {
-            upperScore++;
-            if (i - upperScore <= 0) {
-                shouldStop = true;
-                upperScore = i;
-                continue;
-            }
+        const upperScore = checkLeft(elementToCheck, i, verticalRow);
+        const lowerScore = checkRight(elementToCheck, i, verticalRow);
 
-            if (verticalRow[i - upperScore] <= elementToCheck) {
-                shouldStop = true;
-            }
-        }
-
-        shouldStop = false;
-        let lowerScore = 0;
-        while (!shouldStop) {
-            lowerScore++;
-            if (i + lowerScore >= verticalRow.length) {
-                shouldStop = true;
-                upperScore = verticalRow.length - 1 - i;
-                continue;
-            }
-
-            if (verticalRow[i + lowerScore] >= elementToCheck) {
-                shouldStop = true;
-            }
-        }
-
-        const totalScore = leftScore * rightScore * upperScore * lowerScore;
+        const totalScore = upperScore * leftScore * lowerScore * rightScore;
         if (totalScore > maxScore) {
             maxScore = totalScore;
         }
@@ -145,3 +92,42 @@ console.log(maxScore);
 
 
 // Utils
+
+
+function checkLeft(valueToCheck: number, startingIndex: number, array: number[]): number {
+    let shouldStop = false;
+    let leftScore = 0;
+    while (!shouldStop) {
+        leftScore++;
+        if (startingIndex - leftScore === 0) {
+            shouldStop = true;
+            leftScore = startingIndex - 1;
+            continue;
+        }
+
+        if (array[startingIndex - leftScore] >= valueToCheck) {
+            shouldStop = true;
+        }
+    }
+
+    return leftScore;
+}
+
+function checkRight(valueToCheck: number, startingIndex: number, array: number[]): number {
+    let shouldStop = false;
+    let rightScore = 0;
+    while (!shouldStop) {
+        rightScore++;
+        if (startingIndex + rightScore === array.length) {
+            shouldStop = true;
+            rightScore = array.length - startingIndex;
+            continue;
+        }
+
+        if (array[startingIndex + rightScore] >= valueToCheck) {
+            shouldStop = true;
+        }
+    }
+
+    return rightScore;
+}
