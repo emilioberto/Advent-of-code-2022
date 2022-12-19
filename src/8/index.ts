@@ -1,6 +1,5 @@
 import fs from "fs";
 import readline from "readline";
-import {start} from "repl";
 
 let input: string[] = [];
 const readInterface = readline.createInterface({
