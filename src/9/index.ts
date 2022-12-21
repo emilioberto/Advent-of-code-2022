@@ -3,7 +3,7 @@ import readline from "readline";
 
 let input: string[] = [];
 
-const instructions: [Direction, number][] = await getInstructions('./resources/9/input')
+const instructions: [Direction, number][] = await getInstructions('./resources/9/testinput')
 
 type Direction = 'U' | 'L' | 'D' | 'R';
 
@@ -11,19 +11,17 @@ type Direction = 'U' | 'L' | 'D' | 'R';
 
 let headY = 0;
 let headX = 0;
-let tailY = 0;
-let tailX = 0;
 let lastDirection: Direction | null = null;
-let lastHeadX = 0;
-let lastHeadY = 0;
 let visitedByTail: string[] = [];
-const showMatrix = false;
+const showMatrix = true;
+
+const numberOfTails = 9;
+let tailsPositions = Array(numberOfTails).fill([headX, headY]);
+let headLastNPositions = Array(numberOfTails).fill([headX, headY]);
 
 for (const instruction of instructions) {
     const [direction, steps] = instruction;
     for (let i = 0; i < steps; i++) {
-        lastHeadX = headX;
-        lastHeadY = headY;
         switch (direction) {
             case 'U':
                 headY -= 1;
@@ -39,14 +37,17 @@ for (const instruction of instructions) {
                 break;
         }
 
-        if (shouldFollowHead(lastDirection, direction, lastHeadX, lastHeadY, headX, headY, tailX, tailY)) {
-            tailX = lastHeadX;
-            tailY = lastHeadY;
+        for (let j = 0; j < numberOfTails; j++) {
+            const shouldFollow = shouldFollowHead(lastDirection, direction, headLastNPositions[j][0], headLastNPositions[j][1], headX, headY, tailsPositions[j][0], tailsPositions[j][1]);
+            if (shouldFollow) {
+                tailsPositions[j] = headLastNPositions[j];
+            }
         }
 
+        headLastNPositions = [[headX, headY], ...headLastNPositions];
         lastDirection = direction;
 
-        const coordinateString = [tailX, tailY].join(',');
+        const coordinateString = [tailsPositions[numberOfTails - 1][0], tailsPositions[numberOfTails - 1][1]].join(',');
         if (!visitedByTail.length || visitedByTail.every(e => e !== coordinateString)) {
             visitedByTail.push(coordinateString);
         }
@@ -59,18 +60,20 @@ for (const instruction of instructions) {
                 matrix.push([...row]);
             }
             matrix[size - 1 - Math.abs(headY)][Math.abs(headX)] = 'H';
-            matrix[size - 1 - Math.abs(tailY)][Math.abs(tailX)] = 'T';
+            tailsPositions.forEach(([tailX, tailY]) => {
+                matrix[size - 1 - Math.abs(tailY)][Math.abs(tailX)] = 'T';
+            })
             printMatrix(matrix);
-            await new Promise(resolve => setTimeout(_ => resolve(true), 250));
+            await new Promise(resolve => setTimeout(_ => resolve(true), 500));
         }
     }
 }
 
 console.log(`Part 1 result is: ${visitedByTail.length}`);
-debugger;
 
 // Part 2
 
+debugger;
 
 // Utils
 
