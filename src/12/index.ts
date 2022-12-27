@@ -56,14 +56,6 @@ class Graph {
         const adjacentNodes = this.adjacencyList.get(sourceKey)
         adjacentNodes.push(destinationKey);
     }
-
-    getByChar(char: string): any[] {
-        return Array.from(this.adjacencyList)
-            .filter(key => {
-                const [x, y] = Graph.getCoordinateFromKey(key[0]);
-                return matrix[y][x] === char;
-            });
-    }
 }
 
 let matrix: string[][] = [];
@@ -93,7 +85,8 @@ for (let y = 0; y < matrix.length; y++) {
         }
 
         queue.push(currentNodeKey);
-        distances.set(currentNodeKey, currentStringValue === 'S' ? 0 : Infinity);
+        // distances.set(currentNodeKey, currentStringValue === 'S' ? 0 : Infinity); // First problem
+        distances.set(currentNodeKey, currentStringValue === 'S' || currentStringValue === 'a' ? 0 : Infinity); // Second problem
 
         graph.addNode(currentNodeKey);
 
