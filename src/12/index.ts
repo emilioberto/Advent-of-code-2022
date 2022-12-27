@@ -127,21 +127,6 @@ while (queue.length) {
     const current = Array.from(queueDistances).find(([key, distance], index) => distance === minDistance)[0];
     queue = queue.filter(n => n !== current);
 
-    // DEBUGGING SHIT
-    const [x, y] = Graph.getCoordinateFromKey(current);
-    const value = matrix[y][x];
-    // visited.add(matrix[y][x]);
-    //
-    // console.clear();
-    // const matrixCopy = JSON.parse(JSON.stringify(matrix)) as string[][];
-    // matrixCopy[y][x] = 'X';
-    // matrixCopy.forEach(row => {
-    //     console.log(row.join(''));
-    // })
-    // await new Promise(resolve => setTimeout(() => resolve(true), 250));
-
-    // DEBUGGED SHIT
-
     if (current === targetKey) {
         break;
     }
